@@ -1,0 +1,132 @@
+﻿/* ================= PAGE HEADER ================= */
+.page-header {
+    margin-bottom: 20px;
+}
+
+.page-header h2 {
+    font-size: 32px;
+    color: #2d8659;
+}
+
+.page-header p {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* ================= KPI GRID ================= */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.kpi-card {
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.kpi-card h3 {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.kpi-card p {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2d8659;
+    margin-top: 5px;
+}
+
+/* ================= DASHBOARD GRID ================= */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+/* CARD */
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.card.large {
+    min-height: 300px;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* ================= FILE GRID ================= */
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+/* FILE CARD */
+.file-card {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    transition: 0.2s;
+}
+
+.file-card:hover {
+    transform: translateY(-3px);
+    border-color: #2d8659;
+}
+
+.file-icon {
+    font-size: 22px;
+    margin-bottom: 5px;
+}
+
+.file-name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.file-type {
+    font-size: 11px;
+    color: #2d8659;
+}
+
+.file-date {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* ================= ACTION BUTTONS ================= */
+.action-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #3da870;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    background: #2d8659;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

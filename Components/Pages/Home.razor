@@ -1,0 +1,218 @@
+﻿@page "/"
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+<head>
+    <link rel="stylesheet" href="css/login.css" />
+</head>
+@using DocArchive.Models
+
+<div class="login-page">
+    <div class="login-container">
+
+        <div class="logo-section">
+            <img src="images/logo_afp.png" class="logo" />
+            <h1>DASM-AFP</h1>
+        </div>
+
+        <!-- IMPORTANT: OnSubmit ensures ENTER works -->
+        <EditForm Model="@loginModel" OnSubmit="HandleLogin">
+
+            <h2 class="login-title">Login</h2>
+
+            <!-- USERNAME -->
+            <div class="input-wrapper @(usernameError ? "input-error" : "")">
+
+                <i class="fa-solid fa-user"></i>
+
+                <input @bind="loginModel.Username"
+                       class="form-control"
+                       placeholder="User ID"
+                       @oninput="ClearError" />
+            </div>
+
+            @if (usernameError)
+            {
+                <span class="error-text">Username is required</span>
+            }
+
+            <!-- PASSWORD -->
+            <div class="input-wrapper @(passwordError ? "input-error" : "")">
+
+                <i class="fa-solid fa-lock"></i>
+
+                <input @bind="loginModel.Password"
+                       type="@passwordType"
+                       class="form-control"
+                       placeholder="Password" />
+
+                <i class="fa-solid @(passwordType == "password" ? "fa-eye" : "fa-eye-slash") eye-icon"
+                   @onclick="TogglePassword"></i>
+            </div>
+
+            @if (passwordError)
+            {
+                <span class="error-text">Password is required</span>
+            }
+
+            <!-- LOCK MESSAGE -->
+            @if (isLocked)
+            {
+                <div class="lock-box">
+                    🚫 Account locked due to failed attempts
+                    <br />
+                    Try again in: <b>@remainingMinutes minutes</b>
+                </div>
+            }
+
+            <!-- LOGIN BUTTON (NO DISABLE BUG) -->
+            <button type="submit"
+                    class="login-btn">
+
+                @if (isLoading)
+                {
+                    <span class="spinner"></span>
+                    <span>Logging in...</span>
+                }
+                else
+                {
+                    <span>Log In</span>
+                }
+
+            </button>
+
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-text">@errorMessage</p>
+        }
+
+    </div>
+</div>
+
+@code {
+
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+
+    private bool isLoading = false;
+
+    private bool usernameError;
+    private bool passwordError;
+
+    private string passwordType = "password";
+
+    // ================= LOCK SYSTEM =================
+    private int failedAttempts = 0;
+    private bool isLocked = false;
+
+    private DateTime lockUntil;
+
+    private int remainingMinutes =>
+        isLocked ? (int)Math.Ceiling((lockUntil - DateTime.Now).TotalMinutes) : 0;
+
+    // ================= LOGIN =================
+    private async Task HandleLogin()
+    {
+        ValidateInputs();
+
+        // ❗ BLOCK LOGIN IF LOCKED
+        if (isLocked)
+        {
+            errorMessage = $"Account locked. Try again in {remainingMinutes} minutes.";
+            return;
+        }
+
+        // ❗ BASIC VALIDATION
+        if (string.IsNullOrWhiteSpace(loginModel.Username) ||
+            string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = "";
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/login", loginModel);
+
+            // ❌ WRONG LOGIN
+            if (!response.IsSuccessStatusCode)
+            {
+                failedAttempts++;
+
+                errorMessage = "Username or password is incorrect.";
+
+                // lock after 2 attempts
+                if (failedAttempts >= 3)
+                {
+                    LockAccount();
+                    errorMessage = "Too many failed attempts. Account locked for 20 minutes.";
+                }
+
+                return;
+            }
+
+            // ✅ SUCCESS RESET
+            failedAttempts = 0;
+            isLocked = false;
+
+            var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+            await SecureStorage.SetAsync("jwt_token", result.Token);
+            await SecureStorage.SetAsync("username", result.Username);
+            await SecureStorage.SetAsync("role", result.Role);
+
+            Nav.NavigateTo("/dashboard", true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Server error: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // ================= LOCK SYSTEM =================
+    private void LockAccount()
+    {
+        isLocked = true;
+        lockUntil = DateTime.Now.AddMinutes(20);
+
+        _ = Task.Run(async () =>
+        {
+            while (DateTime.Now < lockUntil)
+            {
+                await Task.Delay(1000);
+                StateHasChanged();
+            }
+
+            isLocked = false;
+            failedAttempts = 0;
+            errorMessage = "";
+            StateHasChanged();
+        });
+    }
+
+    // ================= VALIDATION =================
+    private void ValidateInputs()
+    {
+        usernameError = string.IsNullOrWhiteSpace(loginModel.Username);
+        passwordError = string.IsNullOrWhiteSpace(loginModel.Password);
+    }
+
+    private void ClearError(ChangeEventArgs e)
+    {
+        usernameError = false;
+    }
+
+    // ================= PASSWORD TOGGLE =================
+    private void TogglePassword()
+    {
+        passwordType = passwordType == "password" ? "text" : "password";
+    }
+}

@@ -1,0 +1,128 @@
+﻿@page "/dashboard"
+@inject NavigationManager Nav
+
+<div class="header">
+    <div class="header-left">
+        <div class="logo"></div>
+        <div class="header-title">
+            <h1>DASM-AFP</h1>
+            <p>ARMED FORCES OF THE PHILIPPINES</p>
+        </div>
+    </div>
+
+    <div class="header-right">
+        <div class="notification-icon">
+            🔔
+            <span class="notification-badge">1</span>
+        </div>
+
+        <div class="user-info">
+            <div class="user-details">
+                <!-- 🔥 DYNAMIC NAME -->
+                <div class="user-name">@fullName</div>
+
+                <!-- 🔥 DYNAMIC ROLE / RANK -->
+                <div class="user-role">@role</div>
+            </div>
+
+            <!-- 🔥 INITIALS -->
+            <div class="user-avatar">@initials</div>
+        </div>
+    </div>
+</div>
+
+<div class="main-container">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <button class="nav-button active">Dashboard</button>
+        <button class="nav-button">Documents</button>
+        <button class="nav-button">Upload</button>
+        <button class="nav-button">Settings</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+        <div class="dashboard-header">
+            <h2>DASHBOARD</h2>
+            <p>Welcome back, @firstName 👋</p>
+        </div>
+
+        <!-- Recently Viewed -->
+        <div class="section">
+            <div class="section-title">
+                📋 Recently Viewed Files
+            </div>
+
+            @if (recentFiles.Count == 0)
+            {
+                <p>No recent files</p>
+            }
+            else
+            {
+                @foreach (var file in recentFiles)
+                {
+                    <div class="file-card">
+                        <div class="file-icon">📄</div>
+                        <div class="file-name">@file.Title</div>
+                        <div class="file-type">@file.Type</div>
+                        <div class="file-date">@file.ViewedText</div>
+                    </div>
+                }
+            }
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private string? fullName;
+    private string? role;
+    private string? initials;
+    private string? firstName;
+
+    private List<FileItem> recentFiles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await SecureStorage.GetAsync("jwt_token");
+
+        if (string.IsNullOrEmpty(token))
+        {
+            Nav.NavigateTo("/", true);
+            return;
+        }
+
+        // 🔥 GET USER DATA FROM STORAGE
+        fullName = await SecureStorage.GetAsync("username");
+        role = await SecureStorage.GetAsync("role");
+
+        // Example: "Juan Dela Cruz"
+        if (!string.IsNullOrEmpty(fullName))
+        {
+            var parts = fullName.Split(' ');
+            firstName = parts[0];
+
+            initials = string.Join("", parts.Select(p => p[0])).ToUpper();
+        }
+
+        // 🔥 SAMPLE DATA (replace with API later)
+        recentFiles = new List<FileItem>
+        {
+            new FileItem
+            {
+                Title = "My Uploaded File",
+                Type = "PDF",
+                ViewedText = "Viewed 1 hour ago"
+            }
+        };
+    }
+
+    public class FileItem
+    {
+        public string Title { get; set; }
+        public string Type { get; set; }
+        public string ViewedText { get; set; }
+    }
+}
