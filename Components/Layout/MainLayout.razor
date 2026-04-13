@@ -1,3 +1,213 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@using Microsoft.Maui.Storage
+@implements IDisposable
 
-@Body
+<div class="app-shell">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo"></div>
+            <div class="header-title">
+                <h1>DASM-AFP</h1>
+                <p>ARMED FORCES OF THE PHILIPPINES</p>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <div class="notification-icon" @onclick="OpenNotifications" style="cursor: pointer;">
+                🔔
+                <span class="notification-badge">@notificationCount</span>
+            </div>
+
+            <div class="user-info" @onclick="GoProfile" style="cursor: pointer;">
+                <div class="user-details">
+                    <div class="user-name">@fullName</div>
+                    <div class="user-role">@role</div>
+                </div>
+                <div class="user-avatar">@initials</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <button class="nav-button @(currentPage == "dashboard" ? "active" : "")" @onclick="GoDashboard">
+                📊 Dashboard
+            </button>
+
+            <button class="nav-button @(currentPage == "documents" ? "active" : "")" @onclick="GoDocuments">
+                📁 Documents
+            </button>
+
+            <button class="nav-button @(currentPage == "upload" ? "active" : "")" @onclick="GoUpload">
+                ⬆️ Upload
+            </button>
+
+            <button class="nav-button @(currentPage == "settings" ? "active" : "")" @onclick="GoSettings">
+                ⚙️ Settings
+            </button>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="content">
+            @Body
+        </div>
+
+    </div>
+
+    <!-- NOTIFICATIONS PANEL -->
+    @if (showNotificationsPanel)
+    {
+        <div class="notifications-panel">
+            <div class="notifications-header">
+                <h3>Notifications</h3>
+                <button class="close-button" @onclick="CloseNotifications">✕</button>
+            </div>
+
+            <div class="notifications-list">
+                @if (notifications.Count > 0)
+                {
+                    @foreach (var notification in notifications)
+                    {
+                        <div class="notification-item">
+                            <div class="notification-dot"></div>
+                            <div class="notification-content">
+                                <p class="notification-title">@notification.Title</p>
+                                <p class="notification-time">@notification.Time</p>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-notifications">
+                        <p>No notifications</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+
+    private string? fullName;
+    private string? role;
+    private string? initials;
+
+    private string currentPage = "dashboard";
+
+    private bool showNotificationsPanel = false;
+    private int notificationCount = 1;
+
+    private List<Notification> notifications = new()
+    {
+        new Notification { Id = 1, Title = "Your document has been reviewed", Time = "2 hours ago" },
+        new Notification { Id = 2, Title = "New security alert", Time = "5 hours ago" },
+        new Notification { Id = 3, Title = "System maintenance scheduled", Time = "1 day ago" }
+    };
+
+    // ✅ INIT
+    protected override async Task OnInitializedAsync()
+    {
+        fullName = await SecureStorage.GetAsync("username") ?? "User";
+        role = await SecureStorage.GetAsync("role") ?? "Officer";
+
+        if (!string.IsNullOrEmpty(fullName))
+        {
+            var parts = fullName.Split(' ');
+            initials = string.Join("", parts.Select(p => p[0])).ToUpper();
+        }
+        else
+        {
+            initials = "U";
+        }
+
+        UpdateCurrentPage();
+
+        // ✅ subscribe to route changes
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    // ✅ route change handler
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        UpdateCurrentPage();
+        StateHasChanged();
+    }
+
+    // ✅ detect current page
+    private void UpdateCurrentPage()
+    {
+        var uri = Nav.Uri.ToLower();
+
+        if (uri.Contains("/dashboard"))
+            currentPage = "dashboard";
+        else if (uri.Contains("/documents"))
+            currentPage = "documents";
+        else if (uri.Contains("/upload"))
+            currentPage = "upload";
+        else if (uri.Contains("/settings"))
+            currentPage = "settings";
+        else if (uri.Contains("/profile"))
+            currentPage = "profile";
+        else
+            currentPage = "dashboard";
+    }
+
+    // ✅ NAVIGATION METHODS
+    private void GoDashboard()
+    {
+        Nav.NavigateTo("/dashboard");
+    }
+
+    private void GoDocuments()
+    {
+        Nav.NavigateTo("/documents");
+    }
+
+    private void GoUpload()
+    {
+        Nav.NavigateTo("/upload");
+    }
+
+    private void GoSettings()
+    {
+        Nav.NavigateTo("/settings");
+    }
+
+    private void GoProfile()
+    {
+        Nav.NavigateTo("/profile");
+    }
+
+    // ✅ NOTIFICATIONS
+    private void OpenNotifications()
+    {
+        showNotificationsPanel = !showNotificationsPanel;
+    }
+
+    private void CloseNotifications()
+    {
+        showNotificationsPanel = false;
+    }
+
+    // ✅ CLEAN DISPOSE
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+
+    // ✅ MODEL
+    public class Notification
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Time { get; set; }
+    }
+}

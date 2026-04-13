@@ -1,28 +1,34 @@
 ﻿@page "/"
 @inject NavigationManager Nav
 @inject HttpClient Http
+@layout EmptyLayout
+@using DocArchive.Services
+@inject WindowService WindowService
+@inject IJSRuntime JS
+@using DocArchive.Models
 
 <head>
     <link rel="stylesheet" href="css/login.css" />
 </head>
-@using DocArchive.Models
 
 <div class="login-page">
+    <button class="close-btn" @onclick="ExitApp">
+        ✕
+    </button>
     <div class="login-container">
+
 
         <div class="logo-section">
             <img src="images/logo_afp.png" class="logo" />
             <h1>DASM-AFP</h1>
         </div>
 
-        <!-- IMPORTANT: OnSubmit ensures ENTER works -->
         <EditForm Model="@loginModel" OnSubmit="HandleLogin">
 
             <h2 class="login-title">Login</h2>
 
             <!-- USERNAME -->
             <div class="input-wrapper @(usernameError ? "input-error" : "")">
-
                 <i class="fa-solid fa-user"></i>
 
                 <input @bind="loginModel.Username"
@@ -38,7 +44,6 @@
 
             <!-- PASSWORD -->
             <div class="input-wrapper @(passwordError ? "input-error" : "")">
-
                 <i class="fa-solid fa-lock"></i>
 
                 <input @bind="loginModel.Password"
@@ -65,10 +70,8 @@
                 </div>
             }
 
-            <!-- LOGIN BUTTON (NO DISABLE BUG) -->
-            <button type="submit"
-                    class="login-btn">
-
+            <!-- LOGIN BUTTON -->
+            <button type="submit" class="login-btn">
                 @if (isLoading)
                 {
                     <span class="spinner"></span>
@@ -78,7 +81,6 @@
                 {
                     <span>Log In</span>
                 }
-
             </button>
 
         </EditForm>
@@ -92,7 +94,6 @@
 </div>
 
 @code {
-
     private LoginModel loginModel = new();
     private string? errorMessage;
 
@@ -103,28 +104,40 @@
 
     private string passwordType = "password";
 
-    // ================= LOCK SYSTEM =================
     private int failedAttempts = 0;
     private bool isLocked = false;
-
     private DateTime lockUntil;
 
     private int remainingMinutes =>
         isLocked ? (int)Math.Ceiling((lockUntil - DateTime.Now).TotalMinutes) : 0;
+
+    // ================= INIT WINDOW MODE =================
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // 🔒 LOGIN MODE (NO TITLE BAR, NO MIN/MAX)
+            WindowService?.SetLoginMode();
+        }
+    }
+
+    // ================= EXIT APP =================
+    private void ExitApp()
+    {
+        WindowService?.ExitApp();
+    }
 
     // ================= LOGIN =================
     private async Task HandleLogin()
     {
         ValidateInputs();
 
-        // ❗ BLOCK LOGIN IF LOCKED
         if (isLocked)
         {
             errorMessage = $"Account locked. Try again in {remainingMinutes} minutes.";
             return;
         }
 
-        // ❗ BASIC VALIDATION
         if (string.IsNullOrWhiteSpace(loginModel.Username) ||
             string.IsNullOrWhiteSpace(loginModel.Password))
         {
@@ -138,14 +151,11 @@
         {
             var response = await Http.PostAsJsonAsync("api/login", loginModel);
 
-            // ❌ WRONG LOGIN
             if (!response.IsSuccessStatusCode)
             {
                 failedAttempts++;
-
                 errorMessage = "Username or password is incorrect.";
 
-                // lock after 2 attempts
                 if (failedAttempts >= 3)
                 {
                     LockAccount();
@@ -155,7 +165,7 @@
                 return;
             }
 
-            // ✅ SUCCESS RESET
+            // ================= SUCCESS =================
             failedAttempts = 0;
             isLocked = false;
 
@@ -165,6 +175,10 @@
             await SecureStorage.SetAsync("username", result.Username);
             await SecureStorage.SetAsync("role", result.Role);
 
+            // 🔓 RESTORE FULL WINDOW (TITLE BAR BACK)
+            WindowService?.SetMainAppMode();
+
+            // 🚀 NAVIGATE TO DASHBOARD
             Nav.NavigateTo("/dashboard", true);
         }
         catch (Exception ex)
@@ -188,13 +202,13 @@
             while (DateTime.Now < lockUntil)
             {
                 await Task.Delay(1000);
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
 
             isLocked = false;
             failedAttempts = 0;
             errorMessage = "";
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         });
     }
 

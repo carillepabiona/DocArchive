@@ -1,122 +1,159 @@
 ﻿@page "/dashboard"
+@layout MainLayout
 @inject NavigationManager Nav
+@using Microsoft.Maui.Storage
+@using DocArchive.Models
+@using DocArchive.Services
 
-<div class="header">
-    <div class="header-left">
-        <div class="logo"></div>
-        <div class="header-title">
-            <h1>DASM-AFP</h1>
-            <p>ARMED FORCES OF THE PHILIPPINES</p>
-        </div>
+<div class="content">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h2>DASHBOARD</h2>
+        <p>Document Archiving & Security Management System</p>
     </div>
 
-    <div class="header-right">
-        <div class="notification-icon">
-            🔔
-            <span class="notification-badge">1</span>
+    <!-- Recently Viewed Files Section -->
+    <div class="recently-viewed-section">
+        <div class="section-title">
+            <span class="icon">📋</span>
+            <h3>Recently Viewed Files</h3>
         </div>
 
-        <div class="user-info">
-            <div class="user-details">
-                <!-- 🔥 DYNAMIC NAME -->
-                <div class="user-name">@fullName</div>
-
-                <!-- 🔥 DYNAMIC ROLE / RANK -->
-                <div class="user-role">@role</div>
-            </div>
-
-            <!-- 🔥 INITIALS -->
-            <div class="user-avatar">@initials</div>
-        </div>
-    </div>
-</div>
-
-<div class="main-container">
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <button class="nav-button active">Dashboard</button>
-        <button class="nav-button">Documents</button>
-        <button class="nav-button">Upload</button>
-        <button class="nav-button">Settings</button>
-    </div>
-
-    <!-- Content -->
-    <div class="content">
-
-        <div class="dashboard-header">
-            <h2>DASHBOARD</h2>
-            <p>Welcome back, @firstName 👋</p>
-        </div>
-
-        <!-- Recently Viewed -->
-        <div class="section">
-            <div class="section-title">
-                📋 Recently Viewed Files
-            </div>
-
-            @if (recentFiles.Count == 0)
+        <div class="file-cards">
+            @foreach (var file in recentFiles)
             {
-                <p>No recent files</p>
-            }
-            else
-            {
-                @foreach (var file in recentFiles)
-                {
-                    <div class="file-card">
-                        <div class="file-icon">📄</div>
-                        <div class="file-name">@file.Title</div>
-                        <div class="file-type">@file.Type</div>
-                        <div class="file-date">@file.ViewedText</div>
+                <div class="file-card">
+                    <div class="file-icon">📄</div>
+                    <div class="file-details">
+                        <h4>@file.Title</h4>
+                        <p class="file-type">@file.Type</p>
                     </div>
-                }
+                    <div class="file-meta">
+                        <span class="eye-icon">👁️</span>
+                        <p>@file.ViewedText</p>
+                    </div>
+                </div>
             }
         </div>
+    </div>
 
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <input type="text" class="filter-input" placeholder="Filter by User ID or Type" @bind="filterText" />
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-section">
+        <table class="documents-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (filteredDocuments.Count > 0)
+                {
+                    @foreach (var doc in filteredDocuments)
+                    {
+                        <tr>
+                            <td>@doc.UserId</td>
+                            <td>@doc.Title</td>
+                            <td>@doc.Type</td>
+                            <td>@doc.Date.ToString("MM/dd/yyyy")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="empty-state">No documents found</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
 @code {
-    private string? fullName;
-    private string? role;
-    private string? initials;
-    private string? firstName;
-
     private List<FileItem> recentFiles = new();
+    private List<Document> allDocuments = new();
+    private List<Document> filteredDocuments = new();
+    private string filterText = "";
 
     protected override async Task OnInitializedAsync()
     {
-        var token = await SecureStorage.GetAsync("jwt_token");
-
-        if (string.IsNullOrEmpty(token))
-        {
-            Nav.NavigateTo("/", true);
-            return;
-        }
-
-        // 🔥 GET USER DATA FROM STORAGE
-        fullName = await SecureStorage.GetAsync("username");
-        role = await SecureStorage.GetAsync("role");
-
-        // Example: "Juan Dela Cruz"
-        if (!string.IsNullOrEmpty(fullName))
-        {
-            var parts = fullName.Split(' ');
-            firstName = parts[0];
-
-            initials = string.Join("", parts.Select(p => p[0])).ToUpper();
-        }
-
-        // 🔥 SAMPLE DATA (replace with API later)
+        // Sample Recent Files Data
         recentFiles = new List<FileItem>
         {
             new FileItem
             {
-                Title = "My Uploaded File",
+                Title = "Intelligence Brief - January 2025",
                 Type = "PDF",
-                ViewedText = "Viewed 1 hour ago"
+                ViewedText = "Viewed about 12 hours ago"
+            },
+            new FileItem
+            {
+                Title = "Monthly Report",
+                Type = "DOCX",
+                ViewedText = "Viewed 2 days ago"
             }
         };
+
+        // Sample Documents Data
+        allDocuments = new List<Document>
+        {
+            new Document
+            {
+                UserId = "AFP001",
+                Title = "Intelligence Brief - January 2025",
+                Type = "PDF",
+                Date = DateTime.Now.AddDays(-1)
+            },
+            new Document
+            {
+                UserId = "AFP002",
+                Title = "Monthly Report",
+                Type = "DOCX",
+                Date = DateTime.Now.AddDays(-3)
+            },
+            new Document
+            {
+                UserId = "AFP003",
+                Title = "Security Protocol Update",
+                Type = "PDF",
+                Date = DateTime.Now.AddDays(-5)
+            },
+            new Document
+            {
+                UserId = "AFP004",
+                Title = "Budget Allocation",
+                Type = "XLSX",
+                Date = DateTime.Now.AddDays(-7)
+            }
+        };
+
+        filteredDocuments = allDocuments;
+    }
+
+    private void OnFilterTextChanged(string text)
+    {
+        filterText = text;
+        if (string.IsNullOrWhiteSpace(filterText))
+        {
+            filteredDocuments = allDocuments;
+        }
+        else
+        {
+            var lowerFilter = filterText.ToLower();
+            filteredDocuments = allDocuments
+                .Where(d => d.UserId.ToLower().Contains(lowerFilter) ||
+                            d.Type.ToLower().Contains(lowerFilter) ||
+                            d.Title.ToLower().Contains(lowerFilter))
+                .ToList();
+        }
     }
 
     public class FileItem
@@ -124,5 +161,13 @@
         public string Title { get; set; }
         public string Type { get; set; }
         public string ViewedText { get; set; }
+    }
+
+    public class Document
+    {
+        public string UserId { get; set; }
+        public string Title { get; set; }
+        public string Type { get; set; }
+        public DateTime Date { get; set; }
     }
 }

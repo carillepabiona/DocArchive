@@ -1,6 +1,304 @@
 ﻿@page "/settings"
-<h3>Settings</h3>
+@inject NavigationManager Nav
+@layout MainLayout
+@using Microsoft.Maui.Storage
+@using DocArchive.Models
+@using DocArchive.Services
+<head>
+    <link href="css/settings.css" rel="stylesheet" />
+</head>
+
+<div class="content">
+    <!-- Settings Header -->
+    <div class="settings-header">
+        <h1>SETTINGS</h1>
+        <p>Manage your account settings and preferences.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-button @(activeTab == "notifications" ? "active" : "")"
+                @onclick="@(() => SwitchTab("notifications"))">
+            Notifications
+        </button>
+        <button class="tab-button @(activeTab == "security" ? "active" : "")"
+                @onclick="@(() => SwitchTab("security"))">
+            Security
+        </button>
+    </div>
+
+    <!-- Notifications Tab -->
+    @if (activeTab == "notifications")
+    {
+        <div class="settings-panel">
+            <div class="panel-header">
+                <h2>Notifications Preferences</h2>
+                <p>Choose what notifications you want to receive.</p>
+            </div>
+
+            <!-- Email Notifications -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3>Email Notifications</h3>
+                    <p>Receive email about your account activity</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" @bind="emailNotifications" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Push Notifications -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3>Push Notifications</h3>
+                    <p>Receive push notifications on your devices</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" @bind="pushNotifications" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Marketing Emails -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3>Marketing Emails</h3>
+                    <p>Receive emails about new features and updates</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" @bind="marketingEmails" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Security Alerts -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3>Security Alerts</h3>
+                    <p>Receive alerts about your account security</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" @bind="securityAlerts" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Save Button -->
+            <div class="action-buttons">
+                <button class="save-button" @onclick="SaveNotificationSettings">
+                    Save Changes
+                </button>
+            </div>
+
+            <!-- Success Message -->
+            @if (showNotificationSuccess)
+            {
+                <div class="success-message">
+                    ✓ Notification preferences saved successfully!
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Security Tab -->
+    @if (activeTab == "security")
+    {
+        <div class="settings-panel">
+            <div class="panel-header">
+                <h2>Security Settings</h2>
+                <p>Manage your password and security preferences.</p>
+            </div>
+
+            <!-- Current Password -->
+            <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-input" @bind="currentPassword" placeholder="Enter current password" />
+            </div>
+
+            <!-- New Password -->
+            <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-input" @bind="newPassword" placeholder="Enter new password" />
+                @if (!string.IsNullOrEmpty(newPassword))
+                {
+                    <div class="password-strength">
+                        <div class="strength-bar" style="@($"width: {GetPasswordStrength()}%; background-color: {GetPasswordStrengthColor()};")">&nbsp;</div>
+                    </div>
+                    <p class="strength-text" style="color: @GetPasswordStrengthColor();">
+                        Strength: @GetPasswordStrengthLabel()
+                    </p>
+                }
+            </div>
+
+            <!-- Confirm New Password -->
+            <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" class="form-input" @bind="confirmPassword" placeholder="Confirm new password" />
+                @if (!string.IsNullOrEmpty(confirmPassword) && confirmPassword != newPassword)
+                {
+                    <p class="error-text">Passwords do not match</p>
+                }
+            </div>
+
+            <!-- Update Button -->
+            <div class="action-buttons">
+                <button class="update-button" @onclick="UpdatePassword" disabled="@isUpdatingPassword">
+                    @if (isUpdatingPassword)
+                    {
+                        <span>Updating...</span>
+                    }
+                    else
+                    {
+                        <span>Update Password</span>
+                    }
+                </button>
+            </div>
+
+            <!-- Success Message -->
+            @if (showSecuritySuccess)
+            {
+                <div class="success-message">
+                    ✓ Password updated successfully!
+                </div>
+            }
+
+            <!-- Error Message -->
+            @if (!string.IsNullOrEmpty(securityError))
+            {
+                <div class="error-message">
+                    ✕ @securityError
+                </div>
+            }
+        </div>
+    }
+</div>
+
 
 @code {
+    private string activeTab = "notifications";
 
+    // Notification Settings
+    private bool emailNotifications = true;
+    private bool pushNotifications = false;
+    private bool marketingEmails = false;
+    private bool securityAlerts = true;
+    private bool showNotificationSuccess = false;
+
+    // Security Settings
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string confirmPassword = "";
+    private bool isUpdatingPassword = false;
+    private bool showSecuritySuccess = false;
+    private string securityError = "";
+
+    private void SwitchTab(string tabName)
+    {
+        activeTab = tabName;
+        showNotificationSuccess = false;
+        showSecuritySuccess = false;
+        securityError = "";
+    }
+
+    private async Task SaveNotificationSettings()
+    {
+        // Simulate API call
+        await Task.Delay(1000);
+
+        showNotificationSuccess = true;
+
+        // Hide message after 3 seconds
+        await Task.Delay(3000);
+        showNotificationSuccess = false;
+    }
+
+    private async Task UpdatePassword()
+    {
+        // Validation
+        if (string.IsNullOrEmpty(currentPassword))
+        {
+            securityError = "Please enter your current password";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 8)
+        {
+            securityError = "New password must be at least 8 characters";
+            return;
+        }
+
+        if (newPassword != confirmPassword)
+        {
+            securityError = "Passwords do not match";
+            return;
+        }
+
+        isUpdatingPassword = true;
+        securityError = "";
+
+        try
+        {
+            // Simulate API call - Replace with actual password update logic
+            await Task.Delay(1500);
+
+            showSecuritySuccess = true;
+            currentPassword = "";
+            newPassword = "";
+            confirmPassword = "";
+
+            // Hide message after 3 seconds
+            await Task.Delay(3000);
+            showSecuritySuccess = false;
+        }
+        catch (Exception ex)
+        {
+            securityError = $"Failed to update password: {ex.Message}";
+        }
+        finally
+        {
+            isUpdatingPassword = false;
+        }
+    }
+
+    private int GetPasswordStrength()
+    {
+        if (string.IsNullOrEmpty(newPassword)) return 0;
+
+        int strength = 0;
+
+        // Check length
+        if (newPassword.Length >= 8) strength += 25;
+        if (newPassword.Length >= 12) strength += 15;
+
+        // Check for uppercase
+        if (newPassword.Any(char.IsUpper)) strength += 20;
+
+        // Check for lowercase
+        if (newPassword.Any(char.IsLower)) strength += 20;
+
+        // Check for numbers
+        if (newPassword.Any(char.IsDigit)) strength += 10;
+
+        // Check for special characters
+        if (newPassword.Any(ch => !char.IsLetterOrDigit(ch))) strength += 10;
+
+        return Math.Min(strength, 100);
+    }
+
+    private string GetPasswordStrengthColor()
+    {
+        int strength = GetPasswordStrength();
+        if (strength < 40) return "#dc2626"; // Red
+        if (strength < 70) return "#f59e0b"; // Orange
+        return "#16a34a"; // Green
+    }
+
+    private string GetPasswordStrengthLabel()
+    {
+        int strength = GetPasswordStrength();
+        if (strength < 40) return "Weak";
+        if (strength < 70) return "Fair";
+        return "Strong";
+    }
 }

@@ -1,132 +1,244 @@
-﻿/* ================= PAGE HEADER ================= */
-.page-header {
-    margin-bottom: 20px;
+﻿/* CONTENT AREA */
+.content {
+    flex: 1;
+    padding: 30px 40px;
+    background-color: #f4f6f8;
+    overflow-y: auto;
 }
 
-.page-header h2 {
+/* DASHBOARD HEADER */
+.dashboard-header {
+    margin-bottom: 35px;
+}
+
+    .dashboard-header h2 {
+        color: #2d8659;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .dashboard-header p {
+        color: #2d8659;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+/* RECENTLY VIEWED SECTION */
+.recently-viewed-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+    .section-title .icon {
+        font-size: 18px;
+    }
+
+    .section-title h3 {
+        color: #1f2937;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+/* FILE CARDS */
+.file-cards {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.file-card {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+    .file-card:hover {
+        border-color: #2d8659;
+        box-shadow: 0 4px 12px rgba(45, 134, 89, 0.15);
+    }
+
+.file-icon {
     font-size: 32px;
-    color: #2d8659;
+    min-width: 40px;
 }
 
-.page-header p {
+.file-details {
+    flex: 1;
+}
+
+    .file-details h4 {
+        color: #1f2937;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+.file-type {
     color: #6b7280;
+    font-size: 12px;
+}
+
+.file-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.eye-icon {
     font-size: 14px;
 }
 
-/* ================= KPI GRID ================= */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+/* FILTER SECTION */
+.filter-section {
     margin-bottom: 20px;
 }
 
-.kpi-card {
-    background: white;
-    padding: 18px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.kpi-card h3 {
-    font-size: 13px;
-    color: #6b7280;
-}
-
-.kpi-card p {
-    font-size: 24px;
-    font-weight: bold;
-    color: #2d8659;
-    margin-top: 5px;
-}
-
-/* ================= DASHBOARD GRID ================= */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
-}
-
-/* CARD */
-.card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #e5e7eb;
-}
-
-.card.large {
-    min-height: 300px;
-}
-
-.card-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 15px;
-}
-
-/* ================= FILE GRID ================= */
-.file-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-}
-
-/* FILE CARD */
-.file-card {
-    background: #f9fafb;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    transition: 0.2s;
-}
-
-.file-card:hover {
-    transform: translateY(-3px);
-    border-color: #2d8659;
-}
-
-.file-icon {
-    font-size: 22px;
-    margin-bottom: 5px;
-}
-
-.file-name {
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.file-type {
-    font-size: 11px;
-    color: #2d8659;
-}
-
-.file-date {
-    font-size: 11px;
-    color: #9ca3af;
-}
-
-/* ================= ACTION BUTTONS ================= */
-.action-btn {
+.filter-input {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: none;
+    max-width: 350px;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    background: #3da870;
-    color: white;
-    cursor: pointer;
-    transition: 0.2s;
+    font-size: 13px;
+    background-color: #f3f4f6;
+    color: #1f2937;
 }
 
-.action-btn:hover {
-    background: #2d8659;
+    .filter-input::placeholder {
+        color: #9ca3af;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #2d8659;
+        background-color: white;
+    }
+
+/* TABLE SECTION */
+.table-section {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
-/* ================= RESPONSIVE ================= */
-@media (max-width: 900px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
+.documents-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+    .documents-table thead {
+        background-color: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+        .documents-table thead th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+    .documents-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: 0.2s;
+    }
+
+        .documents-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+    .documents-table tbody td {
+        padding: 16px;
+        color: #4b5563;
+    }
+
+.empty-state {
+    text-align: center;
+    color: #9ca3af;
+    padding: 40px 16px;
+    font-style: italic;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .content {
+        padding: 25px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 26px;
+    }
+
+    .file-card {
+        width: 100%;
+    }
+
+    .file-cards {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .content {
+        padding: 20px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 24px;
+    }
+
+    .documents-table {
+        font-size: 12px;
+    }
+
+        .documents-table thead th,
+        .documents-table tbody td {
+            padding: 12px 8px;
+        }
+
+    .filter-input {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        padding: 15px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 20px;
+    }
+
+    .documents-table {
+        font-size: 11px;
+    }
+
+        .documents-table thead th,
+        .documents-table tbody td {
+            padding: 8px 4px;
+        }
+
+    .file-card {
+        width: 100%;
     }
 }

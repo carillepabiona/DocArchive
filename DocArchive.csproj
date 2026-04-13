@@ -22,7 +22,7 @@
         <Nullable>enable</Nullable>
 
         <!-- Display name -->
-        <ApplicationTitle>DocArchive</ApplicationTitle>
+        <ApplicationTitle></ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.companyname.docarchive</ApplicationId>

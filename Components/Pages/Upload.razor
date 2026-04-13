@@ -1,6 +1,209 @@
 ﻿@page "/upload"
-<h3>Upload</h3>
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@layout MainLayout
+@using Microsoft.Maui.Storage
+@using DocArchive.Models
+@using DocArchive.Services
+
+<head>
+    <link href="css/upload.css" rel="stylesheet" />
+</head>
+<div class="content">
+    <!-- Upload Container -->
+    <div class="upload-container">
+        <div class="upload-box">
+            <!-- Header -->
+            <div class="upload-header">
+                <h1>UPLOAD DOCUMENT</h1>
+                <p>Add a new document to the archive system</p>
+            </div>
+
+            <!-- Document Preview Area -->
+            <div class="preview-section">
+                @if (!string.IsNullOrEmpty(previewImage))
+                {
+                    <div class="document-preview" @onclick="TriggerFileInput">
+                        <img src="@previewImage" alt="Document Preview" />
+                        <div class="preview-overlay">
+                            <span>CLICK TO PREVIEW</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="document-preview empty" @onclick="TriggerFileInput">
+                        <div class="upload-placeholder">
+                            <span class="upload-icon">📄</span>
+                            <p>Click to select document</p>
+                        </div>
+                    </div>
+                }
+
+                <!-- Hidden File Input -->
+                <InputFile OnChange="HandleFileSelected" />
+            </div>
+
+            <!-- File Name Display -->
+            @if (!string.IsNullOrEmpty(selectedFileName))
+            {
+                <div class="file-name">
+                    @selectedFileName.ToUpper()
+                </div>
+            }
+
+            <!-- Dropdowns Section -->
+            <div class="dropdowns-section">
+                <div class="dropdown-group">
+                    <select class="dropdown" @bind="selectedCategory">
+                        <option value="">Select Category</option>
+                        <option value="strategic">Strategic Documents</option>
+                        <option value="intelligence">Intelligence Report</option>
+                        <option value="operational">Operational Plan</option>
+                        <option value="administrative">Administrative</option>
+                        <option value="personnel">Personnel Records</option>
+                        <option value="financial">Financial Document</option>
+                    </select>
+                </div>
+
+                <div class="dropdown-group">
+                    <select class="dropdown" @bind="selectedClassification">
+                        <option value="">Select Classification</option>
+                        <option value="unclassified">Unclassified</option>
+                        <option value="confidential">Confidential</option>
+                        <option value="secret">Secret</option>
+                        <option value="topsecret">Top Secret</option>
+                        <option value="fouo">For Official Use Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Upload Button -->
+            <button class="upload-button" @onclick="UploadDocument" disabled="@isUploading">
+                @if (isUploading)
+                {
+                    <span>Uploading...</span>
+                }
+                else
+                {
+                    <span>Upload Document</span>
+                }
+            </button>
+
+            <!-- Success Message -->
+            @if (showSuccessMessage)
+            {
+                <div class="success-message">
+                    ✓ Document uploaded successfully!
+                </div>
+            }
+
+            <!-- Error Message -->
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-message">
+                    ✕ @errorMessage
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
 
 @code {
+    private ElementReference fileInput;
+    private string selectedFileName = "";
+    private string previewImage = "";
+    private string selectedCategory = "";
+    private string selectedClassification = "";
+    private bool isUploading = false;
+    private bool showSuccessMessage = false;
+    private string errorMessage = "";
 
+    private async Task TriggerFileInput()
+    {
+        await fileInput.FocusAsync();
+        await JS.InvokeVoidAsync("eval", "document.querySelector('input[type=file]').click()");
+    }
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        selectedFileName = file.Name;
+
+        if (file.ContentType.StartsWith("image/"))
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            previewImage = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+        else
+        {
+            previewImage = "data:image/svg+xml,...";
+        }
+    }
+
+    private async Task UploadDocument()
+    {
+        // Validation
+        if (string.IsNullOrEmpty(selectedFileName))
+        {
+            errorMessage = "Please select a document first";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(selectedCategory))
+        {
+            errorMessage = "Please select a category";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(selectedClassification))
+        {
+            errorMessage = "Please select a classification";
+            return;
+        }
+
+        isUploading = true;
+        errorMessage = "";
+
+        try
+        {
+            // Simulate API call - Replace with actual upload logic
+            await Task.Delay(2000);
+
+            showSuccessMessage = true;
+            selectedFileName = "";
+            previewImage = "";
+            selectedCategory = "";
+            selectedClassification = "";
+
+            // Hide success message after 3 seconds
+            await Task.Delay(3000);
+            showSuccessMessage = false;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private IJSObjectReference module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                module = await JS.InvokeAsync<IJSObjectReference>("import", "./Upload.razor.js");
+            }
+            catch { }
+        }
+    }
 }

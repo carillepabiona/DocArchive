@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DocArchive.Models;
+using DocArchive.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.PlatformConfiguration;
 using Microsoft.Maui.LifecycleEvents;
-using DocArchive.Services;
-using DocArchive.Models;
 
 
 #if WINDOWS
@@ -32,6 +32,7 @@ namespace DocArchive
             builder.Logging.AddDebug();
             builder.Services.AddSingleton<AuthService>();
             builder.Services.AddSingleton<DocumentService>();
+            builder.Services.AddSingleton<WindowService>();
 
             builder.Services.AddScoped(sp =>
             {
@@ -46,24 +47,20 @@ namespace DocArchive
             builder.ConfigureLifecycleEvents(events =>
             {
 #if WINDOWS
-                events.AddWindows(windows =>
-                {
-                    windows.OnWindowCreated(window =>
-                    {
-                        var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                        var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
-                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+    events.AddWindows(windows =>
+    {
+        windows.OnWindowCreated(window =>
+        {
+            var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
 
-                        // ✅ Recommended: Maximized (NOT fullscreen)
-                        var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
-                            windowId,
-                            Microsoft.UI.Windowing.DisplayAreaFallback.Primary
-                        );
-
-                        var workArea = displayArea.WorkArea;
-                        appWindow.MoveAndResize(workArea);
-                    });
-                });
+            // ❌ REMOVE THIS (do NOT auto maximize)
+            // var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
+            // var workArea = displayArea.WorkArea;
+            // appWindow.MoveAndResize(workArea);
+        });
+    });
 #endif
             });
 

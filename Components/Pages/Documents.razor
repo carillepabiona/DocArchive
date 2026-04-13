@@ -1,6 +1,205 @@
 ﻿@page "/documents"
-<h3>Documents</h3>
+@layout MainLayout
+@inject NavigationManager Nav
+@using Microsoft.Maui.Storage
+@using DocArchive.Models
+@using DocArchive.Services
+
+<div class="content">
+    <!-- Page Header -->
+    <div class="documents-header">
+        <h1>DOCUMENT ARCHIVE</h1>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <div class="search-container">
+            <input type="text"
+                   class="search-input"
+                   placeholder="SEARCH NAME"
+                   @bind="searchName"
+                   @oninput="@((ChangeEventArgs e) => OnSearchNameChanged(e.Value?.ToString()))" />
+            <span class="search-icon">🔍</span>
+        </div>
+
+        <div class="search-container">
+            <input type="text"
+                   class="search-input"
+                   placeholder="SEARCH DOCUMENT ID"
+                   @bind="searchDocumentId"
+                   @oninput="@((ChangeEventArgs e) => OnSearchDocumentIdChanged(e.Value?.ToString()))" />
+            <span class="search-icon">🔍</span>
+        </div>
+    </div>
+
+    <!-- Documents Table -->
+    <div class="table-wrapper">
+        <table class="documents-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (filteredDocuments.Count > 0)
+                {
+                    @foreach (var doc in filteredDocuments)
+                    {
+                        <tr>
+                            <td>@doc.UserId</td>
+                            <td>@doc.Title</td>
+                            <td>@doc.Type</td>
+                            <td>@doc.Date.ToString("MM-dd-yy")</td>
+                            <td class="actions-cell">
+                                <button class="action-button" @onclick="@(() => OpenActionMenu(doc.Id))">
+                                    ⋮
+                                </button>
+                                @if (openActionMenuId == doc.Id)
+                                {
+                                    <div class="action-menu">
+                                        <button class="menu-item" @onclick="@(() => ViewDocument(doc))">👁️ View</button>
+                                        <button class="menu-item" @onclick="@(() => EditDocument(doc))">✏️ Edit</button>
+                                        <button class="menu-item" @onclick="@(() => DeleteDocument(doc.Id))">🗑️ Delete</button>
+                                        <button class="menu-item" @onclick="@(() => DownloadDocument(doc))">⬇️ Download</button>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="empty-state">No documents found</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
 
 @code {
+    private List<Document> allDocuments = new();
+    private List<Document> filteredDocuments = new();
+    private string searchName = "";
+    private string searchDocumentId = "";
+    private int? openActionMenuId = null;
 
+    protected override Task OnInitializedAsync()
+    {
+        // Sample Documents Data
+        allDocuments = new List<Document>
+        {
+            new Document
+            {
+                Id = 1,
+                UserId = "10035",
+                Title = "Operational Plan Mindanao 2026",
+                Type = "Strategic Security",
+                Date = new DateTime(2025, 11, 25)
+            },
+            new Document
+            {
+                Id = 2,
+                UserId = "10234",
+                Title = "Intelligence Brief - January 2026",
+                Type = "Actionable Insight",
+                Date = new DateTime(2026, 1, 14)
+            },
+            new Document
+            {
+                Id = 3,
+                UserId = "10049",
+                Title = "Personnel Roster Q1 2026",
+                Type = "Workforce Inventory",
+                Date = new DateTime(2025, 12, 8)
+            },
+            new Document
+            {
+                Id = 4,
+                UserId = "10087",
+                Title = "Budget Allocation Report",
+                Type = "Financial Document",
+                Date = new DateTime(2026, 2, 3)
+            },
+            new Document
+            {
+                Id = 5,
+                UserId = "10102",
+                Title = "Training Schedule 2026",
+                Type = "Administrative",
+                Date = new DateTime(2026, 1, 20)
+            }
+        };
+
+        filteredDocuments = allDocuments;
+        return Task.CompletedTask;
+    }
+
+    private void OnSearchNameChanged(string value)
+    {
+        searchName = value ?? "";
+        ApplyFilters();
+    }
+
+    private void OnSearchDocumentIdChanged(string value)
+    {
+        searchDocumentId = value ?? "";
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredDocuments = allDocuments
+            .Where(d =>
+                (string.IsNullOrWhiteSpace(searchName) || d.Title.IndexOf(searchName, StringComparison.OrdinalIgnoreCase) >= 0) &&
+                (string.IsNullOrWhiteSpace(searchDocumentId) || d.UserId.Contains(searchDocumentId))
+            )
+            .ToList();
+    }
+
+    private void OpenActionMenu(int docId)
+    {
+        openActionMenuId = openActionMenuId == docId ? null : docId;
+    }
+
+    private void ViewDocument(Document doc)
+    {
+        Console.WriteLine($"Viewing: {doc.Title}");
+        openActionMenuId = null;
+    }
+
+    private void EditDocument(Document doc)
+    {
+        Console.WriteLine($"Editing: {doc.Title}");
+        openActionMenuId = null;
+    }
+
+    private void DeleteDocument(int docId)
+    {
+        allDocuments.RemoveAll(d => d.Id == docId);
+        ApplyFilters();
+        openActionMenuId = null;
+    }
+
+    private void DownloadDocument(Document doc)
+    {
+        Console.WriteLine($"Downloading: {doc.Title}");
+        openActionMenuId = null;
+    }
+
+    public class Document
+    {
+        public int Id { get; set; }
+        public string UserId { get; set; }
+        public string Title { get; set; }
+        public string Type { get; set; }
+        public DateTime Date { get; set; }
+    }
 }

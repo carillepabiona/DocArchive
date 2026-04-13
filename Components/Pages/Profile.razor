@@ -1,0 +1,284 @@
+﻿@page "/profile"
+@inject NavigationManager Nav
+@using Microsoft.Maui.Storage
+@using DocArchive.Models
+@using DocArchive.Services
+<head>
+    <link href="css/profile.css" rel="stylesheet" />
+</head>
+
+<div class="profile-container">
+
+
+    <!-- Main Profile Content -->
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <h1>User Profile</h1>
+            <button class="edit-button" @onclick="ToggleEditMode">
+                @if (isEditMode)
+                {
+                    <span>Cancel</span>
+                }
+                else
+                {
+                    <span>Edit</span>
+                }
+            </button>
+        </div>
+
+        @if (!isEditMode)
+        {
+            <!-- View Mode -->
+            <div class="profile-content">
+                <!-- User Info -->
+                <div class="profile-section">
+                    <div class="avatar-name-section">
+                        <div class="avatar-circle">@initials</div>
+                        <div class="name-info">
+                            <h2>@fullName</h2>
+                            <p class="rank">@rank</p>
+                            <p class="organization">@organization</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Clearance -->
+                <div class="profile-row">
+                    <span class="icon">🛡️</span>
+                    <span class="label">Security Clearance:</span>
+                    <span class="clearance-badge @GetClearanceClass()">@clearance</span>
+                </div>
+
+                <!-- Email -->
+                <div class="profile-row">
+                    <span class="icon">✉️</span>
+                    <span class="label">Email:</span>
+                    <span class="value">@email</span>
+                </div>
+
+                <!-- Phone -->
+                <div class="profile-row">
+                    <span class="icon">📱</span>
+                    <span class="label">Phone:</span>
+                    <span class="value">@phone</span>
+                </div>
+
+                <!-- Location -->
+                <div class="profile-row">
+                    <span class="icon">📍</span>
+                    <span class="label">Location:</span>
+                    <span class="value">@location</span>
+                </div>
+
+                <!-- Date Joined -->
+                <div class="profile-row">
+                    <span class="icon">📅</span>
+                    <span class="label">Date Joined:</span>
+                    <span class="value">@dateJoined.ToString("MMMM dd, yyyy")</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Edit Mode -->
+            <div class="profile-edit-form">
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" @bind="editFullName" />
+                </div>
+
+                <!-- Rank -->
+                <div class="form-group">
+                    <label class="form-label">Rank</label>
+                    <input type="text" class="form-input" @bind="editRank" />
+                </div>
+
+                <!-- Organization -->
+                <div class="form-group">
+                    <label class="form-label">Organization</label>
+                    <input type="text" class="form-input" @bind="editOrganization" />
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" @bind="editEmail" />
+                </div>
+
+                <!-- Phone -->
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" @bind="editPhone" />
+                </div>
+
+                <!-- Location -->
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" class="form-input" @bind="editLocation" />
+                </div>
+
+                <!-- Security Clearance -->
+                <div class="form-group">
+                    <label class="form-label">Security Clearance</label>
+                    <select class="form-input" @bind="editClearance">
+                        <option value="Unclassified">Unclassified</option>
+                        <option value="Confidential">Confidential</option>
+                        <option value="Secret">Secret</option>
+                        <option value="Top Secret">Top Secret</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <button class="save-button" @onclick="SaveProfile" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span>Save Changes</span>
+                        }
+                    </button>
+                    <button class="cancel-button" @onclick="@(() => isEditMode = false)">Cancel</button>
+                </div>
+
+                <!-- Success Message -->
+                @if (showSaveSuccess)
+                {
+                    <div class="success-message">
+                        ✓ Profile updated successfully!
+                    </div>
+                }
+
+                <!-- Error Message -->
+                @if (!string.IsNullOrEmpty(saveError))
+                {
+                    <div class="error-message">
+                        ✕ @saveError
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-button-container">
+        <button class="back-button" @onclick="@(() => Nav.NavigateTo("/dashboard"))">
+            ← Back to Dashboard
+        </button>
+    </div>
+</div>
+
+
+
+@code {
+    private bool isEditMode = false;
+    private bool isSaving = false;
+    private bool showSaveSuccess = false;
+    private string saveError = "";
+
+    // View Mode Data
+    private string fullName = "Maj. Juan Dela Cruz";
+    private string rank = "Major";
+    private string organization = "Philippine Army - G2 Intelligence Division";
+    private string email = "juan.delacruz@afp.mil.ph";
+    private string phone = "+63 917 123 4567";
+    private string location = "Camp Aguinaldo, Quezon City";
+    private string clearance = "Secret";
+    private DateTime dateJoined = new DateTime(2026, 6, 15);
+    private string initials = "JC";
+
+    // Edit Mode Data
+    private string editFullName = "";
+    private string editRank = "";
+    private string editOrganization = "";
+    private string editEmail = "";
+    private string editPhone = "";
+    private string editLocation = "";
+    private string editClearance = "";
+
+    protected override Task OnInitializedAsync()
+    {
+        // Initialize edit fields with current values
+        editFullName = fullName;
+        editRank = rank;
+        editOrganization = organization;
+        editEmail = email;
+        editPhone = phone;
+        editLocation = location;
+        editClearance = clearance;
+
+        return Task.CompletedTask;
+    }
+
+    private void ToggleEditMode()
+    {
+        if (isEditMode)
+        {
+            // Cancel edit - revert to original values
+            editFullName = fullName;
+            editRank = rank;
+            editOrganization = organization;
+            editEmail = email;
+            editPhone = phone;
+            editLocation = location;
+            editClearance = clearance;
+        }
+        isEditMode = !isEditMode;
+        showSaveSuccess = false;
+        saveError = "";
+    }
+
+    private async Task SaveProfile()
+    {
+        // Validation
+        if (string.IsNullOrWhiteSpace(editFullName) || string.IsNullOrWhiteSpace(editEmail))
+        {
+            saveError = "Please fill in all required fields";
+            return;
+        }
+
+        isSaving = true;
+        saveError = "";
+
+        try
+        {
+            // Simulate API call
+            await Task.Delay(1500);
+
+            // Update profile data
+            fullName = editFullName;
+            rank = editRank;
+            organization = editOrganization;
+            email = editEmail;
+            phone = editPhone;
+            location = editLocation;
+            clearance = editClearance;
+
+            // Update initials
+            initials = string.Join("", editFullName.Split(' ').Select(x => x[0])).ToUpper();
+
+            showSaveSuccess = true;
+            isEditMode = false;
+
+            // Hide success message after 3 seconds
+            await Task.Delay(3000);
+            showSaveSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            saveError = $"Failed to save profile: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private string GetClearanceClass()
+    {
+        return clearance.ToLower().Replace(" ", "");
+    }
+}
