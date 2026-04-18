@@ -28,6 +28,19 @@
                 </div>
                 <div class="user-avatar">@initials</div>
             </div>
+            @if (showUserMenu)
+            {
+                <div class="user-menu-dropdown">
+                    <button class="user-menu-item" @onclick="GoProfile">
+                        <i class="fa-regular fa-circle-user"></i> Profile
+                    </button>
+
+                    <div class="menu-divider"></div>
+                    <button class="user-menu-item sign-out" @onclick="HandleSignOut">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>Sign Out
+                    </button>
+                </div>
+            }
         </div>
     </div>
 
@@ -103,6 +116,7 @@
     private string currentPage = "dashboard";
 
     private bool showNotificationsPanel = false;
+    private bool showUserMenu = false;
     private int notificationCount = 1;
 
     private List<Notification> notifications = new()
@@ -163,33 +177,60 @@
     // ✅ NAVIGATION METHODS
     private void GoDashboard()
     {
+        showUserMenu = false;
         Nav.NavigateTo("/dashboard");
     }
 
     private void GoDocuments()
     {
+        showUserMenu = false;
         Nav.NavigateTo("/documents");
     }
 
     private void GoUpload()
     {
+        showUserMenu = false;
         Nav.NavigateTo("/upload");
     }
 
     private void GoSettings()
     {
+        showUserMenu = false;
         Nav.NavigateTo("/settings");
     }
 
     private void GoProfile()
     {
+        showUserMenu = false;
         Nav.NavigateTo("/profile");
+    }
+
+    // ✅ USER MENU
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+        showNotificationsPanel = false;
+    }
+
+    // ✅ SIGN OUT
+    private async Task HandleSignOut()
+    {
+        showUserMenu = false;
+
+        // Clear secure storage
+        SecureStorage.Remove("jwt_token");
+        SecureStorage.Remove("username");
+        SecureStorage.Remove("role");
+
+        // Navigate to login
+        Nav.NavigateTo("/", true);
     }
 
     // ✅ NOTIFICATIONS
     private void OpenNotifications()
     {
         showNotificationsPanel = !showNotificationsPanel;
+        showUserMenu = false;
     }
 
     private void CloseNotifications()

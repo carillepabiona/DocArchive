@@ -12,11 +12,9 @@
 </head>
 
 <div class="login-page">
-    <button class="close-btn" @onclick="ExitApp">
-        ✕
-    </button>
-    <div class="login-container">
+    <button class="close-btn" @onclick="ExitApp">✕</button>
 
+    <div class="login-container">
 
         <div class="logo-section">
             <img src="images/logo_afp.png" class="logo" />
@@ -98,7 +96,6 @@
     private string? errorMessage;
 
     private bool isLoading = false;
-
     private bool usernameError;
     private bool passwordError;
 
@@ -111,17 +108,14 @@
     private int remainingMinutes =>
         isLocked ? (int)Math.Ceiling((lockUntil - DateTime.Now).TotalMinutes) : 0;
 
-    // ================= INIT WINDOW MODE =================
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            // 🔒 LOGIN MODE (NO TITLE BAR, NO MIN/MAX)
             WindowService?.SetLoginMode();
         }
     }
 
-    // ================= EXIT APP =================
     private void ExitApp()
     {
         WindowService?.ExitApp();
@@ -165,20 +159,31 @@
                 return;
             }
 
-            // ================= SUCCESS =================
             failedAttempts = 0;
             isLocked = false;
 
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
+            if (result == null)
+            {
+                errorMessage = "Invalid server response.";
+                return;
+            }
+
+            // ================= ROLE CHECK (USER APP ONLY) =================
+            if (result.Role != "Staff" && result.Role != "User")
+            {
+                errorMessage = "Access denied. This application is for Users only.";
+                return;
+            }
+
+            // ================= STORE SESSION =================
             await SecureStorage.SetAsync("jwt_token", result.Token);
             await SecureStorage.SetAsync("username", result.Username);
             await SecureStorage.SetAsync("role", result.Role);
 
-            // 🔓 RESTORE FULL WINDOW (TITLE BAR BACK)
             WindowService?.SetMainAppMode();
 
-            // 🚀 NAVIGATE TO DASHBOARD
             Nav.NavigateTo("/dashboard", true);
         }
         catch (Exception ex)
@@ -191,7 +196,7 @@
         }
     }
 
-    // ================= LOCK SYSTEM =================
+    // ================= LOCK =================
     private void LockAccount()
     {
         isLocked = true;
@@ -222,9 +227,9 @@
     private void ClearError(ChangeEventArgs e)
     {
         usernameError = false;
+        errorMessage = "";
     }
 
-    // ================= PASSWORD TOGGLE =================
     private void TogglePassword()
     {
         passwordType = passwordType == "password" ? "text" : "password";

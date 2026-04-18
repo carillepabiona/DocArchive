@@ -42,22 +42,22 @@ namespace DocArchive.Services
         }
 
         // ================= NORMAL MODE (RESTORE TITLE BAR) =================
-        public void SetMainAppMode()
-        {
-#if WINDOWS
-            if (_appWindow == null) return;
+            public void SetMainAppMode()
+            {
+    #if WINDOWS
+                if (_appWindow == null) return;
 
-            var presenter = _appWindow.Presenter as OverlappedPresenter;
+                var presenter = _appWindow.Presenter as OverlappedPresenter;
 
-            // 🔥 RESTORE TITLE BAR
-            presenter.SetBorderAndTitleBar(true, true);
+                // 🔥 RESTORE TITLE BAR
+                presenter.SetBorderAndTitleBar(true, true);
 
-            presenter.IsMaximizable = true;
-            presenter.IsMinimizable = true;
-            presenter.IsResizable = true;
+                presenter.IsMaximizable = true;
+                presenter.IsMinimizable = true;
+                presenter.IsResizable = true;
 
-            _appWindow.Resize(new SizeInt32(1200, 800));
-#endif
+                _appWindow.Resize(new SizeInt32(1200, 800));
+    #endif
         }
 
 #if WINDOWS
