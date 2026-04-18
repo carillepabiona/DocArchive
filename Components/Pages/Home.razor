@@ -171,9 +171,9 @@
             }
 
             // ================= ROLE CHECK (USER APP ONLY) =================
-            if (result.Role != "Staff" && result.Role != "User")
+            if (result.Role != "Employee")
             {
-                errorMessage = "Access denied. This application is for Users only.";
+                errorMessage = "Access denied. This application is for Employees only.";
                 return;
             }
 
