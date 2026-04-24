@@ -13,6 +13,7 @@
 
     <div class="profile-card">
 
+        <!-- HEADER -->
         <div class="profile-card-header">
             <h1>User Profile</h1>
 
@@ -21,72 +22,79 @@
             </button>
         </div>
 
-        @if (!isEditMode)
-        {
-            <div class="profile-content">
+        <!-- PROFILE CONTENT (SAME STRUCTURE FOR BOTH MODES) -->
+        <div class="profile-content">
 
-                <div class="profile-section">
-                    <div class="avatar-name-section">
-                        <div class="avatar-circle">@initials</div>
+            <!-- USER INFO SECTION -->
+            <div class="profile-section">
+                <div class="avatar-name-section">
+                    <div class="avatar-circle">@initials</div>
 
-                        <div class="name-info">
-                            <h2>@username</h2>
-                            <p class="rank">@fullName</p>
-                            <p class="organization">Employee ID: @userCode</p>
-                        </div>
+                    <div class="name-info">
+                        <h2>@username</h2>
+                        <p class="rank">@fullName</p>
+                        <p class="organization">Employee ID: @userCode</p>
                     </div>
                 </div>
-
-                <div class="profile-row">
-                    <span class="icon">✉️</span>
-                    <span class="label">Email:</span>
-                    <span class="value">@email</span>
-                </div>
-
-                <div class="profile-row">
-                    <span class="icon">📱</span>
-                    <span class="label">Phone:</span>
-                    <span class="value">@phone</span>
-                </div>
-
-                <div class="profile-row">
-                    <span class="icon">📍</span>
-                    <span class="label">Address:</span>
-                    <span class="value">@address</span>
-                </div>
-
-                <div class="profile-row">
-                    <span class="icon">🛡️</span>
-                    <span class="label">Role:</span>
-                    <span class="value">@role</span>
-                </div>
-
             </div>
-        }
-        else
+
+            <!-- EMAIL (READ ONLY) -->
+            <div class="profile-row">
+                <span class="icon">✉️</span>
+                <span class="label">Email:</span>
+                <span class="value">@email</span>
+            </div>
+
+            <!-- PHONE (EDITABLE ONLY) -->
+            <div class="profile-row">
+                <span class="icon">📱</span>
+                <span class="label">Phone:</span>
+
+                @if (!isEditMode)
+                {
+                    <span class="value">@phone</span>
+                }
+                else
+                {
+                    <input class="inline-input" @bind="editPhone" />
+                }
+            </div>
+
+            <!-- ADDRESS (EDITABLE ONLY) -->
+            <div class="profile-row">
+                <span class="icon">📍</span>
+                <span class="label">Address:</span>
+
+                @if (!isEditMode)
+                {
+                    <span class="value">@address</span>
+                }
+                else
+                {
+                    <input class="inline-input" @bind="editAddress" />
+                }
+            </div>
+
+            <!-- ROLE (READ ONLY) -->
+            <div class="profile-row">
+                <span class="icon">🛡️</span>
+                <span class="label">Role:</span>
+                <span class="value">@role</span>
+            </div>
+
+        </div>
+
+        <!-- ACTION BUTTONS ONLY IN EDIT MODE -->
+        @if (isEditMode)
         {
-            <div class="profile-edit-form">
+            <div class="form-actions">
+                <button class="save-button" @onclick="SaveProfile">
+                    Save
+                </button>
 
-                <div class="form-group">
-                    <label class="form-label">Phone</label>
-                    <input class="form-input" @bind="editPhone" />
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Address</label>
-                    <input class="form-input" @bind="editAddress" />
-                </div>
-
-                <div class="form-actions">
-                    <button class="save-button" @onclick="SaveProfile">
-                        Save
-                    </button>
-
-                    <button class="cancel-button" @onclick="ToggleEditMode">
-                        Cancel
-                    </button>
-                </div>
-
+                <button class="cancel-button" @onclick="ToggleEditMode">
+                    Cancel
+                </button>
             </div>
         }
 
@@ -98,7 +106,7 @@
 
     private bool isEditMode;
 
-    // ===== DATA =====
+    // ===== USER DATA =====
     private string username = "";
     private string fullName = "";
     private string email = "";
@@ -108,7 +116,7 @@
     private string role = "";
     private string initials = "";
 
-    // edit only
+    // ===== EDIT FIELDS =====
     private string editPhone = "";
     private string editAddress = "";
 
@@ -130,7 +138,6 @@
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(token);
 
-        // ✅ FIXED: use correct claim types
         username = jwt.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "";
         role = jwt.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Employee";
 
@@ -140,7 +147,6 @@
         address = jwt.Claims.FirstOrDefault(c => c.Type == "address")?.Value ?? "";
         userCode = jwt.Claims.FirstOrDefault(c => c.Type == "userCode")?.Value ?? "";
 
-        // fallback (IMPORTANT FIX)
         if (string.IsNullOrWhiteSpace(fullName))
             fullName = username;
 
@@ -166,7 +172,8 @@
 
     private async Task SaveProfile()
     {
-        // TODO: call API update endpoint
+        // TODO: API update call here
+
         phone = editPhone;
         address = editAddress;
 

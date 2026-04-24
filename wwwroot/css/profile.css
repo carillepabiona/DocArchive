@@ -1,12 +1,15 @@
-﻿
+﻿/* ============================= */
 /* PROFILE CONTAINER */
+/* ============================= */
 .profile-container {
     background-color: #f4f6f8;
     min-height: 100vh;
     padding: 20px;
 }
 
-/* PROFILE TOP HEADER */
+/* ============================= */
+/* TOP HEADER */
+/* ============================= */
 .profile-top-header {
     background: white;
     border-bottom: 2px solid #d1d5db;
@@ -79,7 +82,9 @@
     font-size: 18px;
 }
 
+/* ============================= */
 /* PROFILE CARD */
+/* ============================= */
 .profile-card {
     background: white;
     border: 3px solid #2d8659;
@@ -105,6 +110,9 @@
         margin: 0;
     }
 
+/* ============================= */
+/* BUTTONS */
+/* ============================= */
 .edit-button {
     padding: 8px 24px;
     background: white;
@@ -123,11 +131,13 @@
         background: #f0fdf4;
     }
 
-/* PROFILE CONTENT (VIEW MODE) */
+/* ============================= */
+/* PROFILE CONTENT */
+/* ============================= */
 .profile-content {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
 }
 
 .profile-section {
@@ -175,12 +185,14 @@
     margin: 4px 0 0 0;
 }
 
+/* ============================= */
 /* PROFILE ROWS */
+/* ============================= */
 .profile-row {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 12px 0;
+    padding: 10px 0;
 }
 
     .profile-row .icon {
@@ -195,97 +207,67 @@
         min-width: 140px;
     }
 
-    .profile-row .value {
-        color: #1f2937;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-/* CLEARANCE BADGE */
-.clearance-badge {
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    color: white;
-}
-
-    .clearance-badge.unclassified {
-        background: #10b981;
-    }
-
-    .clearance-badge.confidential {
-        background: #f59e0b;
-    }
-
-    .clearance-badge.secret {
-        background: #ef4444;
-    }
-
-    .clearance-badge.topsecret {
-        background: #8b5cf6;
-    }
-
-/* EDIT FORM */
-.profile-edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.form-label {
-    color: #1f2937;
-    font-size: 13px;
-    font-weight: 600;
-}
-
+/* ============================= */
+/* INPUTS (MAIN CHANGE) */
+/* ============================= */
 .form-input {
+    flex: 1;
+    width: 100%;
     padding: 11px 14px;
-    border: 1px solid #d1d5db;
     border-radius: 6px;
     font-size: 13px;
-    color: #374151;
+    border: 1px solid #d1d5db;
     background: white;
-    transition: 0.3s;
+    transition: all 0.2s ease;
 }
 
+    /* READ ONLY STATE */
+    .form-input[readonly] {
+        background-color: #f3f4f6;
+        border: none;
+        color: #6b7280;
+        cursor: not-allowed;
+    }
+
+    /* EDITABLE STATE */
+    .form-input:not([readonly]) {
+        border: 1px solid #2d8659;
+        background-color: #ffffff;
+    }
+
+    /* FOCUS EFFECT */
     .form-input:focus {
         outline: none;
         border-color: #2d8659;
-        background: #f0fdf4;
+        box-shadow: 0 0 0 2px rgba(45, 134, 89, 0.15);
     }
 
-    .form-input::placeholder {
-        color: #9ca3af;
-    }
+/* OPTIONAL: highlight editable rows */
+.profile-row:has(input:not([readonly])) {
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 6px;
+}
 
-/* FORM ACTIONS */
+/* ============================= */
+/* ACTION BUTTONS */
+/* ============================= */
 .form-actions {
     display: flex;
     gap: 12px;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
-.save-button,
-.cancel-button {
+.save-button {
     padding: 11px 28px;
     border: none;
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
-}
-
-.save-button {
     background: #2d8659;
     color: white;
+    transition: 0.3s;
 }
 
     .save-button:hover:not(:disabled) {
@@ -294,45 +276,13 @@
     }
 
     .save-button:disabled {
-        opacity: 0.7;
+        opacity: 0.6;
         cursor: not-allowed;
     }
 
-.cancel-button {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-    .cancel-button:hover {
-        background: #d1d5db;
-    }
-
-/* MESSAGES */
-.success-message {
-    margin-top: 16px;
-    padding: 12px 16px;
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    text-align: center;
-}
-
-.error-message {
-    margin-top: 16px;
-    padding: 12px 16px;
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    text-align: center;
-}
-
+/* ============================= */
 /* BACK BUTTON */
+/* ============================= */
 .back-button-container {
     max-width: 900px;
     margin: 0 auto;
@@ -356,7 +306,9 @@
         color: #2d8659;
     }
 
+/* ============================= */
 /* RESPONSIVE */
+/* ============================= */
 @media (max-width: 1024px) {
     .profile-top-header {
         padding: 15px 25px;
@@ -373,10 +325,6 @@
         padding: 30px;
         max-width: 100%;
     }
-
-    .profile-card-header h1 {
-        font-size: 24px;
-    }
 }
 
 @media (max-width: 768px) {
@@ -388,25 +336,6 @@
         padding: 12px 20px;
     }
 
-    .logo {
-        width: 45px;
-        height: 45px;
-    }
-
-    .header-text h2 {
-        font-size: 16px;
-    }
-
-    .header-text p {
-        font-size: 10px;
-    }
-
-    .user-header-info {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
-
     .profile-card {
         padding: 20px;
     }
@@ -415,14 +344,6 @@
         flex-direction: column;
         gap: 15px;
         align-items: flex-start;
-    }
-
-    .edit-button {
-        align-self: flex-end;
-    }
-
-    .avatar-name-section {
-        gap: 15px;
     }
 
     .avatar-circle {
@@ -438,43 +359,24 @@
         .profile-row .label {
             min-width: 120px;
         }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .save-button {
+        width: 100%;
+    }
 }
 
+
 @media (max-width: 480px) {
-    .profile-top-header {
-        padding: 10px 15px;
-    }
-
-    .logo {
-        width: 40px;
-        height: 40px;
-    }
-
-    .header-text h2 {
-        font-size: 14px;
-    }
-
-    .header-text p {
-        font-size: 9px;
-    }
-
-    .user-avatar-large {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-
     .profile-card {
         padding: 15px;
     }
 
     .profile-card-header h1 {
         font-size: 20px;
-    }
-
-    .edit-button {
-        padding: 6px 16px;
-        font-size: 12px;
     }
 
     .avatar-circle {
@@ -486,22 +388,4 @@
     .name-info h2 {
         font-size: 16px;
     }
-
-    .profile-row {
-        gap: 12px;
-    }
-
-        .profile-row .icon {
-            font-size: 18px;
-        }
-
-    .form-actions {
-        flex-direction: column;
-    }
-
-    .save-button,
-    .cancel-button {
-        width: 100%;
-    }
 }
-

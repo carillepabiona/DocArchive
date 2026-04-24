@@ -171,9 +171,10 @@
             }
 
             // ================= ROLE CHECK (USER APP ONLY) =================
-            if (result.Role != "Employee")
+            // ================= ROLE CHECK (USER APP ONLY) =================
+            if (result.Role != "Civilian" && result.Role != "Military Personnel")
             {
-                errorMessage = "Access denied. This application is for Employees only.";
+                errorMessage = "Access denied. This application is for Civilian and Military Personnel only.";
                 return;
             }
 

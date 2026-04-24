@@ -16,6 +16,11 @@ namespace DocArchive.Services
             _http = http;
         }
 
+        public async Task<HttpResponseMessage> UploadDocument(MultipartFormDataContent content)
+        {
+            return await _http.PostAsync("api/documents/upload", content);
+        }
+
         public async Task<List<string>> GetDocuments()
         {
             var token = await SecureStorage.GetAsync("jwt_token");

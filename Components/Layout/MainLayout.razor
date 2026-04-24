@@ -162,8 +162,8 @@
 
         if (uri.Contains("/dashboard"))
             currentPage = "dashboard";
-        else if (uri.Contains("/documents"))
-            currentPage = "documents";
+        else if (uri.Contains("/documents-user"))
+            currentPage = "documents-user";
         else if (uri.Contains("/upload"))
             currentPage = "upload";
         else if (uri.Contains("/settings"))
@@ -184,7 +184,7 @@
     private void GoDocuments()
     {
         showUserMenu = false;
-        Nav.NavigateTo("/documents");
+        Nav.NavigateTo("/documents-user");
     }
 
     private void GoUpload()
