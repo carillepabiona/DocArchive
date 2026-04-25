@@ -1,7 +1,10 @@
 ﻿@page "/documents-user"
 @inject HttpClient Http
+@inject IJSRuntime JS
 @layout MainLayout
+@implements IDisposable
 @using DocArchive.Models
+@using System.Net.Http.Json
 
 <link href="css/documents-user.css" rel="stylesheet" />
 
@@ -9,77 +12,120 @@
 
     <div class="doc-container">
 
+        <!-- HEADER -->
         <div class="doc-header">
             <h1>My Documents</h1>
             <p>Browse your uploaded files</p>
         </div>
 
-        <!-- GRID VIEW -->
-        <div class="doc-grid">
+        <!-- LOADING -->
+        @if (isLoading)
+        {
+            <div class="empty-state">
+                ⏳ Loading documents...
+            </div>
+        }
+        else
+        {
+            <!-- GRID -->
+            <div class="doc-grid">
 
-            @if (documents == null || documents.Count == 0)
-            {
-                <div class="empty-state">
-                    📂 No documents yet
-                </div>
-            }
-            else
-            {
-                @foreach (var doc in documents)
+                @if (documents == null || !documents.Any())
                 {
-                    <div class="doc-card" @onclick="() => ViewFile(doc.FilePath)">
-
-                        <!-- PREVIEW -->
-                        <div class="doc-preview">
-                            @if (IsImage(doc.FilePath))
-                            {
-                                <img src="@doc.FilePath" />
-                            }
-                            else
-                            {
-                                <div class="file-icon">📄</div>
-                            }
-                        </div>
-
-                        <!-- INFO -->
-                        <div class="doc-info">
-                            <div class="doc-title">@doc.Title</div>
-
-                            <div class="doc-meta">
-                                <span class="category">
-                                    @GetCategoryName(doc.CategoryId)
-                                </span>
-
-                                <span class="date">
-                                    @doc.CreatedAt.ToString("MMM dd")
-                                </span>
-                            </div>
-                        </div>
-
+                    <div class="empty-state">
+                        📂 No documents uploaded yet
                     </div>
                 }
-            }
+                else
+                {
+                    @foreach (var doc in documents)
+                    {
+                        <div class="doc-card" @onclick="() => ViewFile(doc.FilePath)">
 
-        </div>
+                            <!-- PREVIEW -->
+                            <div class="doc-preview">
+
+                                @if (IsImage(doc.FilePath))
+                                {
+                                    <img src="@GetFileUrl(doc.FilePath)" />
+                                }
+                                else if (IsPdf(doc.FilePath))
+                                {
+                                    <div class="file-icon">📄 PDF</div>
+                                }
+                                else if (IsTextFile(doc.FilePath))
+                                {
+                                    <div class="file-icon">📃 TXT</div>
+                                }
+                                else
+                                {
+                                    <div class="file-icon">📁 FILE</div>
+                                }
+
+                            </div>
+
+                            <!-- INFO -->
+                            <div class="doc-info">
+
+                                <div class="doc-title">
+                                    @doc.Title
+                                </div>
+
+                                <div class="doc-meta">
+                                    <span class="category">
+                                        @GetCategoryName(doc.CategoryId)
+                                    </span>
+
+                                    <span class="date">
+                                        @doc.CreatedAt.ToString("MMM dd, yyyy")
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+
+            </div>
+        }
 
         <!-- PREVIEW MODAL -->
         @if (!string.IsNullOrEmpty(selectedFile))
         {
             <div class="preview-modal">
+
                 <div class="preview-box">
 
                     <span class="close" @onclick="ClosePreview">✕</span>
 
                     @if (IsImage(selectedFile))
                     {
-                        <img src="@selectedFile" />
+                        <img src="@GetFileUrl(selectedFile)" />
+                    }
+                    else if (IsPdf(selectedFile))
+                    {
+                        <iframe src="@GetFileUrl(selectedFile)"></iframe>
+                    }
+                    else if (IsTextFile(selectedFile))
+                    {
+                        <div class="text-container">
+                            <pre class="text-content">@textContent</pre>
+                        </div>
                     }
                     else
                     {
-                        <iframe src="@selectedFile"></iframe>
+                        <div class="unsupported">
+                            ⚠ File preview not supported
+                            <br />
+                            <a href="@GetFileUrl(selectedFile)" target="_blank">
+                                Open File
+                            </a>
+                        </div>
                     }
 
                 </div>
+
             </div>
         }
 
@@ -93,40 +139,70 @@
     private List<Category> categories = new();
 
     private string selectedFile = "";
-    private Timer refreshTimer;
+    private string textContent = "";
+    private bool isLoading = true;
 
+    private System.Timers.Timer? refreshTimer;
+
+    // =========================
+    // INIT
+    // =========================
     protected override async Task OnInitializedAsync()
     {
-        await LoadDocuments();
-        await LoadCategories();
+        await LoadData();
 
-        // AUTO REFRESH
-        refreshTimer = new Timer(async _ =>
+        refreshTimer = new System.Timers.Timer(10000);
+        refreshTimer.Elapsed += async (s, e) =>
         {
-            await InvokeAsync(async () =>
-            {
-                await LoadDocuments();
-                StateHasChanged();
-            });
-        }, null, 0, 3000);
+            await InvokeAsync(LoadDocuments);
+        };
+
+        refreshTimer.AutoReset = true;
+        refreshTimer.Start();
     }
 
-    public void Dispose()
+    // =========================
+    // LOAD DATA
+    // =========================
+    private async Task LoadData()
     {
-        refreshTimer?.Dispose();
+        isLoading = true;
+
+        await Task.WhenAll(
+            LoadDocuments(),
+            LoadCategories()
+        );
+
+        isLoading = false;
+        StateHasChanged();
     }
 
     private async Task LoadDocuments()
     {
         try
         {
-            documents = await Http.GetFromJsonAsync<List<Document>>("api/documents")
-                        ?? new List<Document>();
+            var response = await Http.GetAsync("api/documents");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("API ERROR: " + error);
+
+                documents = new List<Document>();
+                return;
+            }
+
+            documents = await response.Content
+                .ReadFromJsonAsync<List<Document>>()
+                ?? new List<Document>();
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine("EXCEPTION: " + ex.Message);
             documents = new List<Document>();
         }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadCategories()
@@ -142,26 +218,81 @@
         }
     }
 
-    private string GetCategoryName(int id)
+    // =========================
+    // FILE HANDLING
+    // =========================
+    private string GetFileUrl(string path)
     {
-        return categories.FirstOrDefault(c => c.Id == id)?.Name ?? "Unknown";
+        if (string.IsNullOrWhiteSpace(path))
+            return "";
+
+        if (path.StartsWith("http"))
+            return path;
+
+        return $"{Http.BaseAddress}{path}";
     }
 
-    private void ViewFile(string path)
+    private async Task ViewFile(string path)
     {
         selectedFile = path;
+        textContent = "";
+
+        if (IsTextFile(path))
+        {
+            try
+            {
+                textContent = await Http.GetStringAsync(GetFileUrl(path));
+            }
+            catch
+            {
+                textContent = "Failed to load text file.";
+            }
+        }
     }
 
     private void ClosePreview()
     {
         selectedFile = "";
+        textContent = "";
     }
 
+    // =========================
+    // FILE TYPE CHECKS
+    // =========================
     private bool IsImage(string path)
     {
+        path = path.ToLower();
         return path.EndsWith(".jpg") ||
-               path.EndsWith(".png") ||
                path.EndsWith(".jpeg") ||
-               path.EndsWith(".jfif");
+               path.EndsWith(".png") ||
+               path.EndsWith(".jfif") ||
+               path.EndsWith(".webp");
+    }
+
+    private bool IsPdf(string path)
+    {
+        return path.ToLower().EndsWith(".pdf");
+    }
+
+    private bool IsTextFile(string path)
+    {
+        return path.ToLower().EndsWith(".txt");
+    }
+
+    // =========================
+    // CATEGORY
+    // =========================
+    private string GetCategoryName(int id)
+    {
+        return categories.FirstOrDefault(c => c.Id == id)?.Name ?? "Unknown";
+    }
+
+    // =========================
+    // CLEANUP
+    // =========================
+    public void Dispose()
+    {
+        refreshTimer?.Stop();
+        refreshTimer?.Dispose();
     }
 }
