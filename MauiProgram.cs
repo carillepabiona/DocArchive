@@ -46,6 +46,8 @@ namespace DocArchive
                 client.BaseAddress = new Uri("http://localhost:5250/");
             })
             .AddHttpMessageHandler<AuthMessageHandler>();
+            builder.Services.AddMauiBlazorWebView();
+
 
             // =========================
             // HTTP CLIENT (FIXED)
@@ -91,6 +93,7 @@ namespace DocArchive
 
             return builder.Build();
         }
+
 
     }
 }

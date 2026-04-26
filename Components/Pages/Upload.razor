@@ -5,11 +5,10 @@
 @layout MainLayout
 @using Microsoft.Maui.Storage
 @using DocArchive.Models
-@using DocArchive.Services
+@using System.Net.Http.Json
 
 <link href="css/upload.css" rel="stylesheet" />
 
-<!-- ✅ TOAST NOTIFICATION -->
 @if (showNotification)
 {
     <div class="toast @(isSuccess ? "success" : "error")">
@@ -26,9 +25,8 @@
             <h1>UPLOAD DOCUMENT</h1>
             <p>File Explorer Style Upload System</p>
 
-            <!-- FILE -->
+            <!-- FILE PICKER -->
             <div class="preview-section">
-
                 @if (!string.IsNullOrEmpty(previewImage))
                 {
                     <div class="document-preview" @onclick="TriggerFileInput">
@@ -52,50 +50,33 @@
 
             <!-- CATEGORY -->
             <div class="section">
-
                 <label>Category</label>
 
                 <select @bind="selectedCategoryId">
                     <option value="0">-- Select Category --</option>
-
                     @foreach (var cat in categories)
                     {
                         <option value="@cat.Id">@cat.Name</option>
                     }
-
-                    <option value="-1">+ Add New Category</option>
                 </select>
-
-                @if (selectedCategoryId == -1)
-                {
-                    <input class="input"
-                           placeholder="Enter new category name"
-                           @bind="newCategoryName" />
-
-                    <button @onclick="CreateCategory">
-                        Save Category
-                    </button>
-                }
-
             </div>
 
-            <!-- FOLDER -->
+            <!-- FOLDER (FROM DATABASE) -->
             <div class="section">
-
                 <label>Folder</label>
 
-                <select @bind="selectedFolder">
-                    <option value="">-- Select Folder --</option>
+                <select @bind="selectedFolderId">
+                    <option value="0">-- Select Folder --</option>
 
                     @foreach (var folder in folders)
                     {
-                        <option value="@folder">@folder</option>
+                        <option value="@folder.Id">@folder.Name</option>
                     }
 
-                    <option value="__new">+ Create New Folder</option>
+                    <option value="-1">+ Create New Folder</option>
                 </select>
 
-                @if (selectedFolder == "__new")
+                @if (selectedFolderId == -1)
                 {
                     <input class="input"
                            placeholder="New folder name"
@@ -105,7 +86,6 @@
                         Save Folder
                     </button>
                 }
-
             </div>
 
             <!-- UPLOAD -->
@@ -114,33 +94,35 @@
             </button>
 
         </div>
-
     </div>
 </div>
 
 @code {
 
+    // FILE
+    private IBrowserFile selectedFile;
     private string selectedFileName = "";
     private string previewImage = "";
-    private IBrowserFile selectedFile;
 
+    // CATEGORY
     private int selectedCategoryId = 0;
-    private string newCategoryName = "";
     private List<Category> categories = new();
 
-    private string selectedFolder = "";
+    // FOLDER (DB BASED)
+    private int selectedFolderId = 0;
     private string newFolderName = "";
-    private List<string> folders = new();
+    private List<Folder> folders = new();
 
-    // ✅ NEW NOTIFICATION SYSTEM
+    // NOTIFICATION
     private bool showNotification = false;
     private string notificationMessage = "";
     private bool isSuccess = true;
 
+    // INIT
     protected override async Task OnInitializedAsync()
     {
         await LoadCategories();
-        LoadFolders();
+        await LoadFolders();
     }
 
     // =========================
@@ -150,36 +132,28 @@
     {
         try
         {
-            var response = await Http.GetAsync("api/categories");
-
-            if (response.IsSuccessStatusCode)
-            {
-                categories = await response.Content.ReadFromJsonAsync<List<Category>>()
-                             ?? new List<Category>();
-            }
+            categories = await Http.GetFromJsonAsync<List<Category>>("api/categories")
+                         ?? new List<Category>();
         }
         catch
         {
-            categories = new List<Category>();
+            categories = new();
         }
     }
 
     // =========================
-    // LOAD FOLDERS
+    // LOAD FOLDERS FROM DB
     // =========================
-    private void LoadFolders()
+    private async Task LoadFolders()
     {
-        var basePath = Path.Combine(FileSystem.AppDataDirectory, "documents");
-
-        if (Directory.Exists(basePath))
+        try
         {
-            folders = Directory.GetDirectories(basePath)
-                .Select(Path.GetFileName)
-                .ToList();
+            folders = await Http.GetFromJsonAsync<List<Folder>>("api/folders")
+                      ?? new List<Folder>();
         }
-        else
+        catch
         {
-            folders = new List<string>();
+            folders = new();
         }
     }
 
@@ -201,46 +175,16 @@
         {
             var buffer = new byte[e.File.Size];
             await e.File.OpenReadStream().ReadAsync(buffer);
-            previewImage = $"data:{e.File.ContentType};base64,{Convert.ToBase64String(buffer)}";
+
+            previewImage =
+                $"data:{e.File.ContentType};base64,{Convert.ToBase64String(buffer)}";
         }
     }
 
     // =========================
-    // CREATE CATEGORY
+    // CREATE FOLDER (DB)
     // =========================
-    private async Task CreateCategory()
-    {
-        if (string.IsNullOrWhiteSpace(newCategoryName))
-        {
-            ShowNotification("Category name required", false);
-            return;
-        }
-
-        var newCat = new Category { Name = newCategoryName };
-
-        var response = await Http.PostAsJsonAsync("api/categories", newCat);
-
-        if (response.IsSuccessStatusCode)
-        {
-            var created = await response.Content.ReadFromJsonAsync<Category>();
-
-            categories.Add(created);
-
-            selectedCategoryId = created.Id;
-            newCategoryName = "";
-
-            ShowNotification("Category created!", true);
-        }
-        else
-        {
-            ShowNotification("Failed to create category", false);
-        }
-    }
-
-    // =========================
-    // CREATE FOLDER
-    // =========================
-    private void CreateFolder()
+    private async Task CreateFolder()
     {
         if (string.IsNullOrWhiteSpace(newFolderName))
         {
@@ -248,19 +192,32 @@
             return;
         }
 
-        if (!folders.Contains(newFolderName))
+        var folder = new Folder
         {
-            folders.Add(newFolderName);
+            Name = newFolderName
+        };
+
+        var response = await Http.PostAsJsonAsync("api/folders", folder);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var created = await response.Content.ReadFromJsonAsync<Folder>();
+
+            folders.Add(created);
+
+            selectedFolderId = created.Id;
+            newFolderName = "";
+
+            ShowNotification("Folder created!", true);
         }
-
-        selectedFolder = newFolderName;
-        newFolderName = "";
-
-        ShowNotification("Folder created!", true);
+        else
+        {
+            ShowNotification("Failed to create folder", false);
+        }
     }
 
     // =========================
-    // UPLOAD DOCUMENT
+    // UPLOAD
     // =========================
     private async Task UploadDocument()
     {
@@ -270,25 +227,19 @@
             return;
         }
 
-        if (selectedCategoryId <= 0)
+        if (selectedCategoryId == 0)
         {
             ShowNotification("Select category", false);
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(selectedFolder))
+        if (selectedFolderId == 0)
         {
             ShowNotification("Select folder", false);
             return;
         }
 
         var token = await SecureStorage.GetAsync("jwt_token");
-
-        if (string.IsNullOrEmpty(token))
-        {
-            ShowNotification("User not authenticated", false);
-            return;
-        }
 
         Http.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -304,29 +255,29 @@
         content.Add(fileContent, "File", selectedFile.Name);
         content.Add(new StringContent(Path.GetFileNameWithoutExtension(selectedFile.Name)), "Title");
         content.Add(new StringContent(selectedCategoryId.ToString()), "CategoryId");
-        content.Add(new StringContent("false"), "IsConfidential");
+        content.Add(new StringContent(selectedFolderId.ToString()), "FolderId");
 
         var response = await Http.PostAsync("api/documents/upload", content);
 
         if (response.IsSuccessStatusCode)
         {
-            ShowNotification("Document uploaded successfully!", true);
+            ShowNotification("Upload successful!", true);
 
             selectedFile = null;
             selectedFileName = "";
             previewImage = "";
             selectedCategoryId = 0;
-            selectedFolder = "";
+            selectedFolderId = 0;
         }
         else
         {
             var error = await response.Content.ReadAsStringAsync();
-            ShowNotification($"Upload failed: {error}", false);
+            ShowNotification(error, false);
         }
     }
 
     // =========================
-    // NOTIFICATION HELPER
+    // NOTIFICATION
     // =========================
     private async void ShowNotification(string message, bool success)
     {
@@ -336,7 +287,7 @@
 
         StateHasChanged();
 
-        await Task.Delay(3000);
+        await Task.Delay(2500);
 
         showNotification = false;
         StateHasChanged();
