@@ -1,26 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Json;
+using Microsoft.Maui.Storage;
 using DocArchive.Models;
 
 namespace DocArchive.Services
 {
-    using System.Net.Http.Json;
-
     public class AuthService
     {
         private readonly HttpClient _http;
 
-        public AuthService()
+        private const string TOKEN_KEY = "auth_token";
+
+        public AuthService(HttpClient http)
         {
-            _http = new HttpClient
-            {
-                BaseAddress = new Uri("http://localhost:5250/")
-            };
+            _http = http;
         }
 
+        // =========================
+        // LOGIN
+        // =========================
         public async Task<string?> Login(string username, string password)
         {
             var request = new
@@ -36,7 +33,29 @@ namespace DocArchive.Services
 
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
+            if (!string.IsNullOrEmpty(result?.Token))
+            {
+                // ✅ SAVE TOKEN
+                await SecureStorage.SetAsync(TOKEN_KEY, result.Token);
+            }
+
             return result?.Token;
+        }
+
+        // =========================
+        // GET TOKEN
+        // =========================
+        public async Task<string?> GetToken()
+        {
+            return await SecureStorage.GetAsync(TOKEN_KEY);
+        }
+
+        // =========================
+        // LOGOUT
+        // =========================
+        public void Logout()
+        {
+            SecureStorage.Remove(TOKEN_KEY);
         }
     }
 }

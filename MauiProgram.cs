@@ -38,6 +38,15 @@ namespace DocArchive
             builder.Services.AddSingleton<DocumentService>();
             builder.Services.AddSingleton<WindowService>();
 
+            builder.Services.AddSingleton<AuthService>();
+            builder.Services.AddTransient<AuthMessageHandler>();
+
+            builder.Services.AddHttpClient("AuthorizedClient", client =>
+            {
+                client.BaseAddress = new Uri("http://localhost:5250/");
+            })
+            .AddHttpMessageHandler<AuthMessageHandler>();
+
             // =========================
             // HTTP CLIENT (FIXED)
             // =========================
